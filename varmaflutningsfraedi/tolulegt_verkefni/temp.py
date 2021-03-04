@@ -29,7 +29,7 @@ s1 = x[3]
 s2 = x[4]
 s3 = x[5]
 
-# create points
+# create points4.01495
 p1 = Entity.Point([0., 0., 0.,d1]) #fyrsti punktur neðri vinstri
 
 p2 = Entity.Point([0.,a, 0.,d1])#2. punktur efri vinstri

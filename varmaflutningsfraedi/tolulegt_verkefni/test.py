@@ -203,7 +203,7 @@ x0 = [0.003,0.01,0.01,0.001, 0.001,0.001]
 sol = minimize(objective,x0,method='SLSQP', constraints = cons)
 print(sol)
 
-
+print('initial volume: {}'.format(V_sk))
 x, y, tri, T, V, q = axifem.axiHeatCond('my_mesh.msh', \
                 {'ribba':16}, {'ytri':(h_utan,-h_utan*T_inf_utan),'innri':(h_innan,-h_innan*T_inf_innan),'einangrun':(0,0)})
 
