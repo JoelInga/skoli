@@ -37,7 +37,7 @@ my_mesh.addEntity(p4)
 
 p5 = Entity.Point([t_veggur+L,(a-d)/2+d-a/2,0.,d1])#5.punktur endi á ribbu efri
 my_mesh.addEntity(p5)
-p6 = Entity.Point([t_veggur+L,(a-d)/2-a/2,0.,d1])#6. punktur endi á ribbu neðri
+p6 = Entity.Point([t_veggur+L,((a-d)/2-a/2)/2,0.,d1])#6. punktur endi á ribbu neðri
 my_mesh.addEntity(p6)
 p7 = Entity.Point([t_veggur,(a-d)/2-a/2,0.,d1])#7. punktur byrjun á ribbu neðri
 my_mesh.addEntity(p7)
