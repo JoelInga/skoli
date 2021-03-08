@@ -104,25 +104,25 @@ def axiHeatCond(mshfile, domain, boundary):
     for e in elem:
         dlab = lab[e[3]]
         a = nodes[roll(e[:3],1)]-nodes[roll(e[:3],-1)]
-
         b = cross(a,[0,0,1])
-        S = cross(a[2],-a[1])[2] / 2.0
+        S = abs(cross(a[2],-a[1])[2] / 2.0) #lagaði mögulega neikvætt svæði fyrir S krossfeldi er ekki alltaf jákvætt
         if S < 0:
             print("ERROR")
-        r = mean(nodes[e[:3]][:,1])
+        r = abs(mean(nodes[e[:3]][:,1])) #mögulega neikvæður radíus leiðretur
         ix = outer(e[:3],[1,1,1])
         
         k = domain[dlab]
         A[ix,ix.T] += k * (b @ b.T) / (4*S) * 2*pi*r
-        volume[dlab] = volume.get(dlab, 0.0) + 2*pi*r*S
+        volume[dlab] = volume.get(dlab, 0.0) + pi*r*S
+        #volume[dlab] = volume.get(dlab, 0.0) + 2*pi*r*S #þetta reiknar 2x rúmmál (nóður ofan og neðan miðju)
 
     rhs = zeros(len(nodes))
     for b in bc:
         a = linalg.norm(nodes[b[0]]-nodes[b[1]])
-        r = mean(nodes[b[:2]][:,1])
+        r = abs(mean(nodes[b[:2]][:,1])) #leiðrétt fyrir mögulega neikvæðan radíus
         ix = outer(b[:2],[1,1])
         alpha, beta = boundary[lab[b[2]]]
-        A[ix,ix.T] += alpha * a * array([[1,2],[2,1]]) / 6 * 2*pi*r
+        A[ix,ix.T] += alpha * a * array([[1,2],[2,1]]) / 6 * 2*pi*r #
         rhs[b[:2]] -= beta * a * array([1,1]) / 2 * 2*pi*r
         
     A = A.tocsr()
@@ -131,7 +131,7 @@ def axiHeatCond(mshfile, domain, boundary):
     edges = dict()
     for b in bc:
         blab = lab[b[2]]
-        r = mean(nodes[b[:2]][:,1])
+        r = abs(mean(nodes[b[:2]][:,1])) #leiðrétt fyrir mögulega neikvæðan radíus
         area = 2*pi*r*linalg.norm(nodes[b[0]]-nodes[b[1]])
         alpha, beta = boundary[blab]
         q = alpha * mean(T[b[:2]]) + beta

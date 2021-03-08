@@ -3,7 +3,7 @@ import axifem
 import os
 from scipy.optimize import minimize
 import numpy as np
-
+import time
 h_innan = 1200
 T_inf_innan = 95
 T_inf_utan = 18
@@ -15,33 +15,33 @@ a = 0.01
 L = 0.01
 d1 = 0.0002
 d2 = 0.0005
-V_sk = 1.8849555921538741e-06
-tolerance = 6e-013 #tolerance for volume
+V_sk = np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*L
+print(V_sk)
 
 
 # create Mesh class instance
 my_mesh = Mesh()
 
 # create points
-p1 = Entity.Point([0., 0., 0.,d1]) #fyrsti punktur neðri vinstri
+p1 = Entity.Point([0., -a/2, 0.,d1]) #fyrsti punktur neðri vinstri
 # add point to mesh
 my_mesh.addEntity(p1) 
 #create more points
-p2 = Entity.Point([0.,a, 0.,d1])#2. punktur efri vinstri
+p2 = Entity.Point([0.,a-a/2, 0.,d1])#2. punktur efri vinstri
 my_mesh.addEntity(p2)
-p3 = Entity.Point([t_veggur, a, 0.,d1])#3. punktur efri hægri
+p3 = Entity.Point([t_veggur, a-a/2, 0.,d1])#3. punktur efri hægri
 my_mesh.addEntity(p3)
 
-p4 = Entity.Point([t_veggur, (a-d)/2+d, 0.,d1])#4. punktur niður frá efri hægri
+p4 = Entity.Point([t_veggur, (a-d)/2+d-a/2, 0.,d1])#4. punktur niður frá efri hægri
 my_mesh.addEntity(p4)
 
-p5 = Entity.Point([t_veggur+L,(a-d)/2+d,0.,d1])#5.punktur endi á ribbu efri
+p5 = Entity.Point([t_veggur+L,(a-d)/2+d-a/2,0.,d1])#5.punktur endi á ribbu efri
 my_mesh.addEntity(p5)
-p6 = Entity.Point([t_veggur+L,(a-d)/2,0.,d1])#6. punktur endi á ribbu neðri
+p6 = Entity.Point([t_veggur+L,(a-d)/2-a/2,0.,d1])#6. punktur endi á ribbu neðri
 my_mesh.addEntity(p6)
-p7 = Entity.Point([t_veggur,(a-d)/2,0.,d1])#7. punktur byrjun á ribbu neðri
+p7 = Entity.Point([t_veggur,(a-d)/2-a/2,0.,d1])#7. punktur byrjun á ribbu neðri
 my_mesh.addEntity(p7)
-p8 = Entity.Point([t_veggur,0.,0.,d1])#síðasti punktur neðri hægri
+p8 = Entity.Point([t_veggur,-a/2,0.,d1])#síðasti punktur neðri hægri
 my_mesh.addEntity(p8)
 # create curves
 l1 = Entity.Curve([p1, p2]) #innri bein lína upp

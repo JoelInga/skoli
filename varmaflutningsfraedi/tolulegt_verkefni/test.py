@@ -35,32 +35,32 @@ def objective(x, sign=-1.0):
     s3 = x[5]
     
     # create points
-    p1 = Entity.Point([0., 0., 0.,d1]) #fyrsti punktur neðri vinstri
+    p1 = Entity.Point([0., -a/2, 0.,d1]) #fyrsti punktur neðri vinstri
 
-    p2 = Entity.Point([0.,a, 0.,d1])#2. punktur efri vinstri
+    p2 = Entity.Point([0.,a-a/2, 0.,d1])#2. punktur efri vinstri
 
-    p3 = Entity.Point([t_veggur, a, 0.,d1])#3. punktur efri hægri
-
-
-    p4 = Entity.Point([t_veggur, a-s1, 0.,d1])#fyrsti ribbup ef
+    p3 = Entity.Point([t_veggur, a-a/2, 0.,d1])#3. punktur efri hægri
 
 
-
-    p5 = Entity.Point([t_veggur+L/2,a-s2,0.,d1])# 2 ribbup ef 
-
-
-    p6 = Entity.Point([t_veggur+L,s3,0.,d1])#síðast ribbup ef
+    p4 = Entity.Point([t_veggur, a-s1-a/2, 0.,d1])#fyrsti ribbup ef
 
 
-    p7 = Entity.Point([t_veggur+L,s3,0.,d1])#síðast ribbup ne
 
-    p8 = Entity.Point([t_veggur+L/2,s2,0,d1])#2. ribbup ne
+    p5 = Entity.Point([t_veggur+L/2,a-s2-a/2,0.,d1])# 2 ribbup ef 
 
 
-    p9 = Entity.Point([t_veggur, s1, 0.,d1])#1. ribbup ef
+    p6 = Entity.Point([t_veggur+L,s3-a/2,0.,d1])#síðast ribbup ef
+
+
+    p7 = Entity.Point([t_veggur+L,s3-a/2,0.,d1])#síðast ribbup ne
+
+    p8 = Entity.Point([t_veggur+L/2,s2-a/2,0,d1])#2. ribbup ne
+
+
+    p9 = Entity.Point([t_veggur, s1-a/2, 0.,d1])#1. ribbup ef
   
   
-    p10 = Entity.Point([t_veggur,0.,0.,d1])#síðasti punktur neðri hægri
+    p10 = Entity.Point([t_veggur,0.-a/2,0.,d1])#síðasti punktur neðri hægri
 
     my_mesh.addEntities([p1,p2,p3,p4,p5,p6,p7,p8,p9,p10])
     # create curves

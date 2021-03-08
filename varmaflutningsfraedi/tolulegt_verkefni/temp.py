@@ -15,6 +15,7 @@ L = 0.01
 d1 = 0.0005
 d2 = 0.0005
 V_sk = np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*(L)
+
 filename = 'mk2'
 os.system('gmsh {}.geo -2 -o {}.msh'.format(filename,filename))
 x, y, tri, T, V, q = axifem.axiHeatCond('mk2.msh', \

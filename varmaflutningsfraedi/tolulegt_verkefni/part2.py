@@ -1,7 +1,7 @@
 from py2gmsh import (Mesh, Entity, Field)
 import axifem
 import os
-from scipy.optimize import minimize,NonlinearConstraint
+from scipy.optimize import minimize,NonlinearConstraint,differential_evolution
 import numpy as np
 import time
 h_innan = 1200
@@ -13,43 +13,42 @@ t_veggur = 0.003
 d = 0.003
 a = 0.01
 L = 0.01
-d1 = 0.0005
+d1 = 0.001
 d2 = 0.0005
 V_sk = np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*(L)
 print('initial volume: {}'.format(V_sk))
 
-tolerance = 6e-11 #tolerance for volume
+tolerance = 1e-10 #tolerance for volume
 # create Mesh class instance
 my_mesh = Mesh()
 i = 0
 
 def objective(x, sign=-1.0):
-    time.sleep(0.1)
     my_mesh = Mesh()
     filename = 'my_mesh'
     d = x[0]
     a = x[1]
     L = x[2]
     # create points
-    p1 = Entity.Point([0., 0., 0.,d1]) #fyrsti punktur neðri vinstri
+    p1 = Entity.Point([0., -a/2, 0.,d1]) #fyrsti punktur neðri vinstri
     # add point to mesh
     my_mesh.addEntity(p1) 
     #create more points
-    p2 = Entity.Point([0.,a, 0.,d1])#2. punktur efri vinstri
+    p2 = Entity.Point([0.,a-a/2, 0.,d1])#2. punktur efri vinstri
     my_mesh.addEntity(p2)
-    p3 = Entity.Point([t_veggur, a, 0.,d1])#3. punktur efri hægri
+    p3 = Entity.Point([t_veggur, a-a/2, 0.,d1])#3. punktur efri hægri
     my_mesh.addEntity(p3)
 
-    p4 = Entity.Point([t_veggur, (a-d)/2+d, 0.,d1])#4. punktur niður frá efri hægri
+    p4 = Entity.Point([t_veggur, (a-d)/2+d-a/2, 0.,d1])#4. punktur niður frá efri hægri
     my_mesh.addEntity(p4)
 
-    p5 = Entity.Point([t_veggur+L,(a-d)/2+d,0.,d1])#5.punktur endi á ribbu efri
+    p5 = Entity.Point([t_veggur+L,(a-d)/2+d-a/2,0.,d1])#5.punktur endi á ribbu efri
     my_mesh.addEntity(p5)
-    p6 = Entity.Point([t_veggur+L,(a-d)/2,0.,d1])#6. punktur endi á ribbu neðri
+    p6 = Entity.Point([t_veggur+L,(a-d)/2-a/2,0.,d1])#6. punktur endi á ribbu neðri
     my_mesh.addEntity(p6)
-    p7 = Entity.Point([t_veggur,(a-d)/2,0.,d1])#7. punktur byrjun á ribbu neðri
+    p7 = Entity.Point([t_veggur,(a-d)/2-a/2,0.,d1])#7. punktur byrjun á ribbu neðri
     my_mesh.addEntity(p7)
-    p8 = Entity.Point([t_veggur,0.,0.,d1])#síðasti punktur neðri hægri
+    p8 = Entity.Point([t_veggur,-a/2,0.,d1])#síðasti punktur neðri hægri
     my_mesh.addEntity(p8)
     # create curves
     l1 = Entity.Curve([p1, p2]) #innri bein lína upp
@@ -88,15 +87,18 @@ def objective(x, sign=-1.0):
     my_mesh.Coherence = True
     # write the geofile
     #os.system('rm .geo')
-    my_mesh.writeGeo('{}.geo'.format(filename))
-    os.system('gmsh {}.geo -2 -o {}.msh'.format(filename,filename))
+    try:
+        my_mesh.writeGeo('{}.geo'.format(filename))
+        os.system('gmsh {}.geo -2 -o {}.msh'.format(filename,filename))
+    except:
+        return -0.5
     #os.system('gmsh my_mesh.geo')
     try:
         xu, y, tri, T, V, q = axifem.axiHeatCond('{}.msh'.format(filename), \
                     {'ribba':k}, {'ytri':(h_utan,-h_utan*T_inf_utan),'innri':(h_innan,-h_innan*T_inf_innan),'einangrun':(0,0)})
         print(sign*q['ytri'][1])
     except:
-        return 0
+        return -0.5
     return sign*q['ytri'][1]
 
 def volume(x):
@@ -107,21 +109,6 @@ def volume(x):
     
     print(v)
     return v
-
-
-def constraint1(x):
-    x_tmp = [*x]
-    v = volume(x_tmp)
-    return v-V_sk+tolerance
-
-def constraint2(x):
-    x_tmp = [*x]
-    v = volume(x_tmp)
-    return V_sk-v+tolerance
-
-def constraint3(x): #d ekki minna 0.25mm
-    d=x[0]
-    return d-0.00025
 
 def constraint4(x): #a ekki minna en 2*d
     d = x[0]
@@ -134,11 +121,10 @@ def constraint5(x): #L stærra en 0
 
 
 
-nlc = NonlinearConstraint(volume,V_sk-tolerance,V_sk+tolerance)
-
-
-
-cons=({'type': 'ineq',
+nlc1 = NonlinearConstraint(volume,V_sk-tolerance,V_sk+tolerance)
+nlc3 = NonlinearConstraint(constraint4,0,np.inf)
+nlc4 = NonlinearConstraint(constraint5,0,np.inf)
+'''cons=({'type': 'ineq',
        'fun': constraint1},
       {'type': 'ineq',
        'fun': constraint2},
@@ -147,12 +133,15 @@ cons=({'type': 'ineq',
       {'type': 'ineq',
        'fun': constraint4},
       {'type': 'ineq',
-       'fun': constraint5})
+       'fun': constraint5})'''
 x0 = [0.003,0.01,0.01]
 
 #vte = volume(x0)
 #print(vte)
-sol = minimize(objective,x0,method='SLSQP', constraints = cons)
+print('initial volume: {}'.format(V_sk))
+bounds = [(0.00025, 0.1),(0,0.1),(0,0.1)]
+#sol = differential_evolution(objective,bounds,constraints = (nlc1,nlc3,nlc4))
+sol = minimize(objective,x0,bounds=bounds,method='trust-constr', constraints = [nlc1,nlc3,nlc4])
 print(sol)
 
 

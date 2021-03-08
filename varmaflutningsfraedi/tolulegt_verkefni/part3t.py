@@ -1,7 +1,7 @@
 from py2gmsh import (Mesh, Entity, Field)
 import axifem
 import os
-from scipy.optimize import minimize,NonlinearConstraint
+from scipy.optimize import minimize,NonlinearConstraint,Bounds,LinearConstraint,BFGS,SR1
 import numpy as np
 import time
 h_innan = 1200
@@ -18,19 +18,25 @@ d2 = 0.0005
 V_sk = np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*(L)
 print('initial volume: {}'.format(V_sk))
 
-tolerance = 6e-11 #tolerance for volume
+tolerance = 6e-10 #tolerance for volume
 # create Mesh class instance
 my_mesh = Mesh()
 i = 0
 
+
+
+
 def objective(x, sign=-1.0):
-    print(x)
     my_mesh = Mesh()
     filename = 'my_mesh'
     a = x[1]
     L = x[2]
     s = x[3:]
-    
+    for point in s:
+        if a-2*point>0.05:
+            d1=0.005
+        else:
+            d1=0.0005
     # create points
     p1 = Entity.Point([0., -a/2, 0.,d1]) #fyrsti punktur neðri vinstri
 
@@ -116,191 +122,116 @@ def objective(x, sign=-1.0):
         my_mesh.writeGeo('{}.geo'.format(filename))
         os.system('gmsh {}.geo -2 -o {}.msh'.format(filename,filename))
     except:
-        return -0.5
+        return min(-0.5*L,-0.5)
     #os.system('gmsh my_mesh.geo')
     try:
         xu, y, tri, T, V, q = axifem.axiHeatCond('{}.msh'.format(filename), \
                     {'ribba':k}, {'ytri':(h_utan,-h_utan*T_inf_utan),'innri':(h_innan,-h_innan*T_inf_innan),'einangrun':(0,0)})
         print(sign*q['ytri'][1])
     except:
-        return -0.5
+        return min(-0.5*L,-0.5)
     
     return sign*q['ytri'][1]
 
-def volume(x):
+
+
+
+def volume1(x):
     
-    d = x[0]
     a = x[1]
     L = x[2]
     s = x[3:]
-    v=np.pi*(a/2)**2*t_veggur#base
+    v=np.pi*(x[1]/2)**2*t_veggur#base
     
     for i in range (0,len(s)-1):
-        v+= 1/3*np.pi*( ((a-2*s[i])/2)**2 + (a-2*s[i])*(a-2*s[i+1])/4 + ((a-2*s[i+1])/2)**2 )*L/(len(s)-1)
+        v+= 1/3*np.pi*( ((x[1]-2*x[3+i])/2)**2 + (x[1]-2*x[3+i])*(x[1]-2*x[3+i+1])/4 + ((x[1]-2*x[3+i+1])/2)**2 )*x[2]/(len(s)-1)
 
     print(v)
-    return v
+    return v-V_sk-tolerance
 
+def volume2(x):
+    
+    a = x[1]
+    L = x[2]
+    s = x[3:]
+    v=np.pi*(x[1]/2)**2*t_veggur#base
+    
+    for i in range (0,len(s)-1):
+        v+= 1/3*np.pi*( ((x[1]-2*x[3+i])/2)**2 + (x[1]-2*x[3+i])*(x[1]-2*x[3+i+1])/4 + ((x[1]-2*x[3+i+1])/2)**2 )*x[2]/(len(s)-1)
 
-def constraint1(x):
-    x_tmp = [*x]
-    v = volume(x_tmp)
-    return v-V_sk+tolerance
-
-def constraint2(x):
-    x_tmp = [*x]
-    v = volume(x_tmp)
+    print(v)
     return V_sk-v+tolerance
 
-def constraint3(x): #d ekki minna 0.25mm
-    d = x[0]
 
-    return d-0.00025
 
-def constraint4(x):
-
+def volume_J(x):
+    J = []
+    a = x[1]
     L = x[2]
-    return L
+    s = x[3:]
+    J.append(0)#fyrir d
+    x1=np.pi*x[1]/2*t_veggur
+    for i in range(0,len(s)-1):
+        x1+=x[2]/(len(s)-1)*np.pi/3*( (x[1]/2-x[3+i])+(x[1]/2-x[3+i]/2-x[3+i+1]/2)+(x[1]/2-x[3+i+1]))
+    J.append(x1)
+    l1 = 0
+    for i in range (0,len(s)-1):
+        l1+= 1/3*np.pi*( ((x[1]-2*x[3+i])/2)**2 + (x[1]-2*x[3+i])*(x[1]-2*x[3+i+1])/4 + ((x[1]-2*x[3+i+1])/2)**2 )*1/(len(s)-1)
+    J.append(l1)
+    s1 = 1/3*np.pi*x[2]/(len(s)-1)*( (-x[1]+2*x[3])+(-x[1]/2+x[3+1]) )
+    J.append(s1)
+    si=[]
+    print(len(s))
+    if len(s)>2:
+        for i in range(0,len(s)-2):#einum minna en síðasti
+            si.append(1/3*np.pi*x[2]/(len(s)-1)*((-x[1]+2*x[4+i])+x[3+i]+(-x[1]+2*x[4+i])+(-x[1]/2+x[4+i+1])))  
+        for s_j in si:
+            J.append(s_j)
+    J.append(1/3*np.pi*x[2]/(len(s)-1)*((-x[1]+2*x[-1])+x[-2]))
 
-def constraint5(x):
-    a = x[1]
-    return a
-#byrja constr
-def constraint6(x):
-    a = x[1]
-    s = x[3]
-    return a-2*s
-def constraint7(x):
-    s = x[3]
-    return s
-
-
-def constraint8(x):
-    a = x[1]
-    s = x[4]
-    return a-2*s
-def constraint9(x):
-    s = x[4]
-    return s
-
-
-def constraint10(x):
-    a = x[1]
-    s = x[5]
-    return a-2*s
-def constraint11(x):
-    s = x[5]
-    return s
-
-def constraint12(x):
-    a = x[1]
-    s = x[6]
-    return a-2*s
-def constraint13(x):
-    s = x[6]
-    return s
-def constraint14(x):
-    a = x[1]
-    s = x[7]
-    return a-2*s
-def constraint15(x):
-    s = x[7]
-    return s
-'''
-
-s0 = x0[3:]
-f = []
-for i in range(0,len(s0)):
-    num = 3+i
-    def c(x,i=i):
-        a = x[1]
-        s = x[num]
-
-        return a-2*s
-    f.append(c)
+    return J
 
 
-f_min = []
-for i in range(0,len(s0)):
-    num = 3+i
-    def de(x,i=i):
-        return x[num]-0.0001
-    f_min.append(de)
 
-print(f)
-print(f_min)'''
-x0 = [0.003,0.01,0.01,0.001, 0.002,0.003,0.004]
-cons=({'type': 'ineq',
-       'fun': constraint1},
-      {'type': 'ineq',
-       'fun': constraint2},
-      {'type': 'ineq',
-       'fun': constraint3},
-      {'type': 'ineq',
-       'fun': constraint4},
-      {'type': 'ineq',
-       'fun': constraint5},
-      {'type': 'ineq',
-       'fun': constraint6},
-      {'type': 'ineq',
-       'fun': constraint7},
-      {'type': 'ineq',
-       'fun': constraint8},
-      {'type': 'ineq',
-       'fun': constraint9},
-      {'type': 'ineq',
-       'fun': constraint10},
-      {'type': 'ineq',
-       'fun': constraint11},
-      {'type': 'ineq',
-       'fun': constraint12},
-      {'type': 'ineq',
-       'fun': constraint13})
+#nlc1 = NonlinearConstraint(volume,V_sk-tolerance,V_sk+tolerance, jac=volume_J,hess=BFGS())
+
+bounds = [[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05],[0.0001,0.05]]
+
+x0 = [0.003,0.01,0.01,0.0035, 0.0035,0.0035,0.0035,0.0035,0.0035]
 
 
-'''
+def make_cons(x):
+    cons=()
+    for i in range (0,len(x0)-3):
+        constraint = {'type': 'ineq', 'fun': lambda x: x[1]-2*x[3+i]}
+        cons +=(constraint,)
+    constraint = {'type': 'ineq', 'fun': lambda x: x[1]-0.001}
+    constraint = {'type': 'ineq', 'fun': volume1(x), 'jac':volume_J(x)}
+    cons+=(constraint,)
+    constraint = {'type': 'ineq', 'fun': volume2(x), 'jac':volume_J(x)}
+    cons+=(constraint,)
+    return cons
 
-      {'type': 'ineq',
-       'fun': constraint12},
-      {'type': 'ineq',
-       'fun': constraint13},
-      {'type': 'ineq',
-       'fun': constraint14},
-      {'type': 'ineq',
-       'fun': constraint15}
-       
-       
-       
-temp = list(cons)
-for function in f:
-    
-    temp.append({'type': 'ineq',
-       'fun': function})
-               
-for function in f_min:
-    temp.append({'type': 'ineq',
-       'fun': function})
-   
-cons = tuple(temp)
-#vte = volume(x0)
-#print(vte)
-print(cons)
- '''
- 
-print(objective(x0))
-os.system('gmsh my_mesh.geo -2 -o my_mesh.msh')
-print('initial volume: {}'.format(V_sk))
-x, y, tri, T, V, q = axifem.axiHeatCond('my_mesh.msh', \
-                {'ribba':k}, {'ytri':(h_utan,-h_utan*T_inf_utan),'innri':(h_innan,-h_innan*T_inf_innan),'einangrun':(0,0)})
+cons=()
+for i in range (0,len(x0)-3):
+    constraint = {'type': 'ineq', 'fun': lambda x: x[1]-2*x[3+i]}
+    cons +=(constraint,)
+constraint = {'type': 'ineq', 'fun': volume1, 'jac':volume_J}
+cons+=(constraint,)
+constraint = {'type': 'ineq', 'fun': volume2, 'jac':volume_J}
+cons+=(constraint,)
+#lcst = LinearConstraint(co,lb,ub)
+for factor in range(len(bounds)):
+    lower, upper = bounds[factor]
+    l = {'type': 'ineq',
+         'fun': lambda x, lb=lower, i=factor: x[i] - lb}
+    u = {'type': 'ineq',
+         'fun': lambda x, ub=upper, i=factor: ub - x[i]}
+    cons+=(l,)
+    cons+=(u,)
 
-
-print('Rúmmál {}'.format(V['ribba']))
-print('Varmaflæði: {:g}'.format(q['ytri'][1]))
-print('Hámarkshitastig: {:g}'.format(max(T)))
-print('Lágmarkshitastig: {:g}'.format(min(T)))
-
- 
-sol = minimize(objective,x0,method='SLSQP',options={'gtol': 1e-6, 'disp': True}, constraints = cons)
+sol = minimize(objective,x0,bounds=bounds,method='COBYLA', constraints = cons)
+#sol = minimize(objective,x0,method='SLSQP',options={'gtol': 1e-6, 'disp': True}, constraints = cons)
 print(sol)
 
 print('initial volume: {}'.format(V_sk))
