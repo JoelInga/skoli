@@ -23,46 +23,50 @@ for item in data:
     tri.append(item['eiginleikar']['fjöldi þríhyrninga'])
     q.append(item['eiginleikar']['Varmaflæði'])
     
-print(ribbuvirkni)
-print(tri)
-print(q)
-print(d1)
-
 
 
 figure()
 plot(tri,ribbuvirkni,'ro-')
-title('ribbuvirkni sem fall af fjölda þríhyrninga')
+title('Ribbuvirkni sem fall af fjölda þríhyrninga')
 per=[]
 for i in range(0,len(ribbuvirkni)-1):
     tmp = 1-ribbuvirkni[i+1]/ribbuvirkni[i]
     per.append(tmp*100)
+xlabel('Fjöldi þríhyrninga')
+ylabel('Ribbuvirkni')
+savefig('fj_tri_ribbv.eps', format='eps', dpi=1200)
 figure()
 log = []
 for i in range(1,len(tri)):
     lg = np.log10(tri[i])
     log.append(lg)
 plot(log,per,'ro-')
-title('breyting í ribbuvirkni (%) sem fall af log(fjölda þríhyrninga)')
-
+xlabel('log(fjöldi þríhyrninga)')
+ylabel('Breyting í ribbuvirkni frá síðasta gildi í %')
+title('Breyting í ribbuvirkni (%) sem fall af log(fjölda þríhyrninga)')
+savefig('fj_tri_ribbv_bre.eps', format='eps', dpi=1200)
 
 
 figure()
 plot(tri,q,'bo-')
-title('varmaflæði sem fall af fjölda þríhyrninga')
+title('Varmaflutningur sem fall af fjölda þríhyrninga')
 per=[]
 for i in range(0,len(q)-1):
     tmp = 1-q[i+1]/q[i]
     per.append(tmp*100)
+xlabel('Fjöldi þríhyrninga')
+ylabel('Varmaflutningur')
+savefig('fj_tri_varm.eps', format='eps', dpi=1200)
 figure()
 log = []
 for i in range(1,len(tri)):
     lg = np.log10(tri[i])
     log.append(lg)
 plot(log,per,'bo-')
-title('breyting í varmaflæði (%) sem fall af log(fjölda þríhyrninga)')
-
-
+title('Breyting í varmaflutning (%) sem fall af log(fjölda þríhyrninga)')
+xlabel('log(fjöldi þríhyrninga)')
+ylabel('Breyting í varmaflutning frá síðasta gildi í %')
+savefig('fj_tri_varm_bre.eps', format='eps', dpi=1200)
 
 show()
 

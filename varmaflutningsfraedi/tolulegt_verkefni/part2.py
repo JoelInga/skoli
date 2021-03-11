@@ -121,7 +121,8 @@ def volume1(x):
     v=np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*(L)
     
     print(v)
-    return v-V_sk+tolerance
+    #return v-V_sk+tolerance
+    return v
 
 def volume2(x):
     d = x[0]
@@ -130,6 +131,7 @@ def volume2(x):
     v=np.pi*(a/2)**2*t_veggur+np.pi*(d/2)**2*(L)
     
     print(v)
+    #return V_sk-v+tolerance
     return V_sk-v+tolerance
 
 def constraint4(x): #a ekki minna en 2*d
@@ -236,7 +238,7 @@ virkni = q['ytri'][1]/q1['ytri'][1]
 from matplotlib.pyplot import *
 print('Ribbuvirkni {}:'.format(virkni))
 print('Rúmmál {}'.format(V['ribba']))
-print('Varmaflæði: {:g}'.format(q['ytri'][1]))
+print('Varmaflutningur: {:g}'.format(q['ytri'][1]))
 print('Hámarkshitastig: {:g}'.format(max(T)))
 print('Lágmarkshitastig: {:g}'.format(min(T)))
 figure(figsize=(16,3))
@@ -244,10 +246,13 @@ tricontourf(x,y,tri,T,20)
 tricontourf(x,-y,tri,T,20)
 colorbar()
 
-text(0.005,0.003,'Varmaflæði: {:g}W'.format(q['ytri'][1]))
+text(0.005,0.003,'Varmaflutningur: {:g}W'.format(q['ytri'][1]))
 text(0.005,0.004,'Ribbuvirkni: {:g}'.format(virkni))
 axis('equal')
 title('Bestuð ribba')
+xlabel('Lengd [m]')
+ylabel('Hæð [m]')
+text(0.02,0.005,'Hitastig í '+r'$^{\circ}$'+'C')
 show()
 
 
