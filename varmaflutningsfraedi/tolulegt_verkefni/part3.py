@@ -136,7 +136,7 @@ def objective(x, sign=-1.0):
                     {'ribba':k}, {'ytri':(h_utan,-h_utan*T_inf_utan),'innri':(h_innan,-h_innan*T_inf_innan),'einangrun':(0,0)})
         print(sign*q['ytri'][1])
         if sign*q['ytri'][1]!=sign*q['ytri'][1]:
-            return -0.1
+            return min(-0.5*(dx+t)*n,-0.5*random())
     except:
         return min(-0.5*(dx+t)*n,-0.5*random())
     
@@ -177,6 +177,7 @@ def volume1(x):
     v+=np.pi*(d/2)**2*dx*n
     v+=np.pi*(r/2)**2*t*n
     print(v)
+    
     return v-V_sk-tolerance
 
 def volume2(x):
@@ -197,40 +198,12 @@ def volume2(x):
 
 
 
-def volume_J(x):
-    J = []
-    a = x[1]
-    L = x[2]
-    s = x[3:]
-    J.append(0)#fyrir d
-    x1=np.pi*x[1]/2*t_veggur
-    for i in range(0,len(s)-1):
-        x1+=x[2]/(len(s)-1)*np.pi/3*( (x[1]/2-x[3+i])+(x[1]/2-x[3+i]/2-x[3+i+1]/2)+(x[1]/2-x[3+i+1]))
-    J.append(x1)
-    l1 = 0
-    for i in range (0,len(s)-1):
-        l1+= 1/3*np.pi*( ((x[1]-2*x[3+i])/2)**2 + (x[1]-2*x[3+i])*(x[1]-2*x[3+i+1])/4 + ((x[1]-2*x[3+i+1])/2)**2 )*1/(len(s)-1)
-    J.append(l1)
-    s1 = 1/3*np.pi*x[2]/(len(s)-1)*( (-x[1]+2*x[3])+(-x[1]/2+x[3+1]) )
-    J.append(s1)
-    si=[]
-    print(len(s))
-    if len(s)>2:
-        for i in range(0,len(s)-2):#einum minna en síðasti
-            si.append(1/3*np.pi*x[2]/(len(s)-1)*((-x[1]+2*x[4+i])+x[3+i]+(-x[1]+2*x[4+i])+(-x[1]/2+x[4+i+1])))  
-        for s_j in si:
-            J.append(s_j)
-    J.append(1/3*np.pi*x[2]/(len(s)-1)*((-x[1]+2*x[-1])+x[-2]))
-
-    return J
-
-
 
 #nlc1 = NonlinearConstraint(volume,V_sk-tolerance,V_sk+tolerance, jac=volume_J,hess=BFGS())
 
-bounds = [[0.00025,0.05],[0.00025,0.05],[0.00025,0.02],[0.,10.1],[0.00025,0.01],[0.00025,0.01],[0.00025,0.01]]
+bounds = [[0.00025,0.02],[0.00025,0.02],[0.00025,0.02],[0.,10.1],[0.00025,0.012],[0.00025,0.012],[0.00025,0.012]]
 #x0 = [d,a,L,n,t,r,dx]
-x0 = [0.003,0.01,0.01,2,0.002,0.0031,(0.01-0.002*2)/2]
+x0 = [0.003,0.01,0.01,2,0.002,0.00301,(0.01-0.002*2)/2]
 
 cons=()
 constraint = {'type': 'ineq', 'fun': volume1}
@@ -324,7 +297,7 @@ virkni = q['ytri'][1]/q1['ytri'][1]
 from matplotlib.pyplot import *
 print('Ribbuvirkni {}:'.format(virkni))
 print('Rúmmál: {}'.format(V['ribba']))
-print('Varmaflæði: {:g}'.format(q['ytri'][1]))
+print('Varmaflutningur: {:g}'.format(q['ytri'][1]))
 print('Hámarkshitastig: {:g}'.format(max(T)))
 print('Lágmarkshitastig: {:g}'.format(min(T)))
 figure(figsize=(16,3))
@@ -333,8 +306,12 @@ tricontourf(x,-y,tri,T,20)
 colorbar()
 axis('equal')
 title('Bestuð ribba með formbreytingum')
-text(0.005,0.003,'Varmaflæði: {:g}W'.format(q['ytri'][1]))
+text(0.005,0.003,'Varmaflutningur: {:g}W'.format(q['ytri'][1]))
 text(0.005,0.004,'Ribbuvirkni: {:g}'.format(virkni))
+text(0.0095,0.006,'Hitastig í '+r'$^{\circ}$'+'C')
+xlabel('Lengd [m]')
+ylabel('Hæð [m]')
+
 show()
 
 
