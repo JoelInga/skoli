@@ -31,9 +31,9 @@ def number_of_isolated_sensors(lamb, number_of_simulations):
             
         shortest_distance = np.zeros(n) #fill an array with zeros (fixed size)
 
-        for i in range(n+1):
+        for i in range(n):
             distance = np.zeros(n)#fill an array with zeros (fixed size)
-            for j in range(n+1):
+            for j in range(n):
                 if i !=j:
                     distance[j] = np.sqrt((x[j]-x[i])**2.0+(y[j]-y[i])**2.0) #calculate distance between nodes
                 else:
@@ -41,7 +41,7 @@ def number_of_isolated_sensors(lamb, number_of_simulations):
                     
             shortest_distance[i] = (np.min(distance)) #find the minimum distance to the next node
         tmp = 0.0
-        for i in range(n+1):
+        for i in range(n):
             if shortest_distance[i] > 3.8266853543893022: #if the minimum distance exceeds the coverage radius, it is isolated
                 tmp +=1.0
         nr += tmp/n #percentage of isolated sensors for the simulation
@@ -74,6 +74,7 @@ if solve:
 
 print('The percentage of isolated sensors for lamba = {} is {}% after {} simulations'.format(lamb,number_of_isolated_sensors(lamb, nr_sim),nr_sim))
 
+            
 plot = True
 if plot:
     pi = np.pi # pi = 3.14...
@@ -95,11 +96,37 @@ if plot:
     for i in range(n):
         x[i] = radii[i] * np.cos(angle[i])
         y[i] = radii[i] * np.sin(angle[i])
+        
+        shortest_distance = np.zeros(n) #fill an array with zeros (fixed size)
+
+    for i in range(n):
+        distance = np.zeros(n)#fill an array with zeros (fixed size)
+        for j in range(n):
+            if i !=j:
+                distance[j] = np.sqrt((x[j]-x[i])**2.0+(y[j]-y[i])**2.0) #calculate distance between nodes
+            else:
+                distance[j] = np.inf #infinite distance for node-same node
+                
+        shortest_distance[i] = (np.min(distance)) #find the minimum distance to the next node
+    tmp = 0.0
     fig = plt.gcf()
     ax = fig.gca()
-    plt.xlim(-300, 300)
-    plt.ylim(-300, 300)
-    circ = plt.Circle((0, 0), radius=200, color='r', linewidth=2, fill=False)
-    plt.polar(angle, radii, 'bo')
+    plt.plot([], [], ' ', label="Lambda = {}".format(lamb))
+    plt.plot([], [], ' ', label="Nr of nodes = {}".format(n))
+    plt.xlim(-r-5, r+5)
+    plt.ylim(-r-5, r+5)
+    circ = plt.Circle((0, 0), radius=r, color='g', linewidth=2, fill=False)
+    plt.plot(x, y, 'bo')
+    x_iso = []
+    y_iso = []
+    for i in range(n):
+        if shortest_distance[i] > 3.8266853543893022: #if the minimum distance exceeds the coverage radius, it is isolated
+            x_iso.append(x[i])
+            y_iso.append(y[i])#find the isolated sensors
+    plt.plot(x_iso, y_iso, 'ro', label = 'isolated nodes')     #mark the isolated sensors
+    plt.legend()
     ax.add_artist(circ)
     plt.show()
+    
+    
+    
