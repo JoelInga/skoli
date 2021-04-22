@@ -57,7 +57,7 @@ if timeit:
     end = time.time()
     print(end-start)
     
-lamb = 0.05
+lamb = 0.107
 nr_sim = 100
 
 def obj(lamb): #objective function
@@ -67,9 +67,39 @@ def solve_for_lamb():
     lamb = brentq(lambda lamb:obj(lamb),0.01,1.0) #Solver
     return lamb
 
-solve = True #to calculate 
+solve = False #to calculate 
 if solve:
     lamb = solve_for_lamb()
     print('ideal density: ', lamb)
 
 print('The percentage of isolated sensors for lamba = {} is {}% after {} simulations'.format(lamb,number_of_isolated_sensors(lamb, nr_sim),nr_sim))
+
+plot = True
+if plot:
+    pi = np.pi # pi = 3.14...
+    r = np.sqrt(10000.0/np.pi) # the radius of the circle (for the region)
+    mean = lamb * pi * r ** 2 # the mean of the Poisson random variable n
+    n = np.random.poisson(mean) # the Poisson random variable (i.e., the number of points inside the region)
+    
+    u_1 = np.random.uniform(0.0, 1.0, n) # generate n uniform (and randomly) distributed points 
+    radii = np.zeros(n) # the radial coordinate of the points
+    for i in range(n):
+        radii[i] = r * (np.sqrt(u_1[i]))
+    u_2 = np.random.uniform(0.0, 1.0, n) # generate another n uniformly distributed points 
+    angle = np.zeros(n) # the angular coordinate of the points
+    for i in range(n):
+        angle[i] = 2 * pi * u_2[i]
+
+    x = np.zeros(n) #convert the polar coordinates to cartesian
+    y = np.zeros(n)
+    for i in range(n):
+        x[i] = radii[i] * np.cos(angle[i])
+        y[i] = radii[i] * np.sin(angle[i])
+    fig = plt.gcf()
+    ax = fig.gca()
+    plt.xlim(-300, 300)
+    plt.ylim(-300, 300)
+    circ = plt.Circle((0, 0), radius=200, color='r', linewidth=2, fill=False)
+    plt.polar(angle, radii, 'bo')
+    ax.add_artist(circ)
+    plt.show()
